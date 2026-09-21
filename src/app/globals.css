@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #ffffff;
+  --ink: #0a0a0a;
+  --red: #ff2b2b;
+  --blue: #1f3bff;
+  --yellow: #ffd400;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  -webkit-font-smoothing: antialiased;
+}
+.font-sans-ui { font-family: Inter, system-ui, -apple-system, sans-serif; }
+
+@keyframes sway { 0%,100% { transform: rotate(-1.5deg); } 50% { transform: rotate(2deg); } }
+@keyframes drift {
+  0% { transform: translate(0,0) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(-90px,-60px) rotate(40deg); opacity: 0; }
+}
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes chug { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.animate-sway { animation: sway 6s ease-in-out infinite; transform-origin: bottom center; }
+.animate-marquee { animation: marquee 18s linear infinite; }
+.animate-chug { animation: chug 0.5s ease-in-out infinite; }
+.leaf { animation: drift 7s ease-in-out infinite; }
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity: 1; transform: none; }
