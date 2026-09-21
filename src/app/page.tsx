@@ -105,7 +105,7 @@ function Visual({ slug }: { slug: string }) {
 
 export default function Home() {
   const journeyRef = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState({ y: 0, x: 0, rot: 0, parked: false, checkpoint: 0 });
+  const [phase, setPhase] = useState({ y: 0, y2: 0, x: 0, rot: 90, parked: false, parkT: 0, checkpoint: 0, turnLabel: "down" });
 
   useEffect(() => {
     const els = document.querySelectorAll(".reveal");
@@ -119,36 +119,79 @@ export default function Home() {
 
   useEffect(() => {
     let raf = 0;
+    let smooth = 0; // lerped scroll progress — the bike follows this, not raw scroll
+    let target = 0;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+    const H = () => journeyRef.current?.clientHeight ?? 1;
+    // 6 segments: down-left → turn1 → across → turn2 → down-right → parked.
+    // Position (x,y) is frozen inside turn segments so rotation never drifts diagonally.
+    // Travel is proportional to measured journey height so the bike visibly moves the whole way.
+    const render = (p: number) => {
+      const seg = (a: number, b: number) => clamp01((p - a) / (b - a));
+      const h = H();
+      const Y1 = h * 0.38;
+      const CROSS = h * 0.05;
+      const Y2 = h * 0.42;
+      const HW = Math.max(120, (journeyRef.current?.clientWidth ?? 400) - 70);
+      const yDown = seg(0, 0.35);          // left rail descent
+      const turn1 = seg(0.35, 0.45);       // 90° → 0°, held in place
+      const across = seg(0.45, 0.65);      // left → right, height held
+      const turn2 = seg(0.65, 0.75);       // 0° → 90°, held in place
+      const yDown2 = seg(0.75, 0.92);      // right rail descent
+      const parkT = seg(0.92, 1);          // settle into parked lean
+      const parked = p > 0.92;
+      // Rotation: +90 (wheels-left) down-left → 0 across → -90 (wheels-right) down-right → 0 parked
+      let rotDeg: number;
+      if (p < 0.35) rotDeg = 90;
+      else if (p < 0.45) rotDeg = 90 * (1 - turn1);
+      else if (p < 0.65) rotDeg = 0;
+      else if (p < 0.75) rotDeg = -90 * turn2;
+      else if (p < 0.92) rotDeg = -90;
+      else rotDeg = -90 * (1 - parkT);
+      if (reduced) rotDeg = 0;
+      const top = yDown * Y1 + (across > 0 || yDown2 > 0 ? CROSS : across * CROSS) + yDown2 * Y2;
+      const left = across * HW;
+      setPhase({
+        y: top,
+        y2: yDown2,
+        x: left,
+        rot: rotDeg,
+        parked,
+        parkT,
+        checkpoint: p < 0.2 ? 0 : p < 0.5 ? 1 : p < 0.75 ? 2 : 3,
+        turnLabel:
+          p < 0.35 ? "down" : p < 0.45 ? "turn1" : p < 0.65 ? "across" : p < 0.75 ? "turn2" : p < 0.92 ? "down-right" : "parked",
+      });
+    };
+    const tick = () => {
+      // persistent loop: always ease toward target and render every frame
+      smooth += (target - smooth) * (reduced ? 1 : 0.12);
+      if (Math.abs(target - smooth) < 0.0005) smooth = target;
+      render(smooth);
+      raf = requestAnimationFrame(tick);
+    };
     const update = () => {
-      raf = 0;
       const el = journeyRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
       const total = r.height - window.innerHeight;
-      const p = Math.min(1, Math.max(0, -r.top / Math.max(total, 1)));
-      // vertical ride 0→0.45, turn 0.45→0.55, horizontal 0.55→0.85, parked 0.85→1
-      const y = Math.min(p / 0.45, 1);
-      const turn = Math.min(Math.max((p - 0.45) / 0.1, 0), 1);
-      const x = Math.min(Math.max((p - 0.55) / 0.3, 0), 1);
-      const parked = p > 0.88;
-      setPhase({
-        y, x,
-        rot: reduced ? 0 : turn * 90,
-        parked,
-        checkpoint: p < 0.2 ? 0 : p < 0.42 ? 1 : p < 0.7 ? 2 : 3,
-      });
+      target = clamp01(-r.top / Math.max(total, 1));
+      if (reduced) { smooth = target; render(smooth); }
     };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    const onScroll = () => update();
     update();
+    render(0);
+    raf = requestAnimationFrame(tick);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
+    window.addEventListener("resize", onScroll);
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); cancelAnimationFrame(raf); };
   }, []);
 
   const pros = PROJECTS.slice(0, 2);
   const personal = PROJECTS.slice(2);
-  const vh = 320; // vertical travel px
-  const hw = 180; // horizontal travel px
+  const bikeTop = phase.y;
+  const bikeLeft = phase.x;
 
   return (
     <main className="bg-[#FAF9F7] min-h-screen">
@@ -164,26 +207,24 @@ export default function Home() {
         <header className="pt-6 text-center">
           <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-50">Portfolio 2026</p>
           <Tree />
-          <p className="font-sans-ui text-[11px] mt-1 uppercase tracking-widest opacity-40">Soft wind study — leaves drift slow & gentle</p>
           <h1 className="text-sm font-bold mt-4 font-sans-ui">Product Designer & Creative Technologist</h1>
-          <p className="mt-2 text-sm opacity-60 font-sans-ui max-w-sm mx-auto">Scroll — the bike rides down through my work, turns, and parks at the end.</p>
         </header>
 
         <div ref={journeyRef} className="relative">
-          {/* scroll-driven bike: absolute, travels the whole journey */}
+          {/* scroll-driven bike: down-left → across → down-right → parked */}
           <div
-            className="absolute left-0 top-0 z-10 pointer-events-none transition-transform duration-100"
-            style={{ transform: `translate(${phase.x * hw}px, ${phase.y * vh + phase.x * 620}px) rotate(${phase.rot}deg) ${phase.parked ? "rotate(-8deg)" : ""}` }}
+            className="absolute left-0 top-0 z-10 pointer-events-none"
+            style={{ transform: `translate(${bikeLeft}px, ${bikeTop}px) rotate(${phase.rot}deg) ${phase.parked ? `rotate(${-8 * phase.parkT}deg)` : ""}` }}
           >
             <BikeFace parked={phase.parked} />
           </div>
 
           {/* ACT 1 — Professional: timeline on the RIGHT of the bike */}
-          <section className="mt-8 pl-24">
+          <section className="mt-8 pl-24 pr-2">
             <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Professional — the ride down</p>
-            <div className="space-y-6 mt-3">
+            <div className="mt-3 space-y-0">
               {pros.map((p, i) => (
-                <Link key={p.slug} href={`/work/${p.slug}`} className="block reveal">
+                <Link key={p.slug} href={`/work/${p.slug}`} className="block reveal min-h-[32vh] py-[3vh]">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: phase.checkpoint >= i ? p.accent : "#ddd" }} />
                     <span className="font-sans-ui text-[10px] tracking-[0.2em] uppercase opacity-50">{["2026 · Hero MotoCorp", "2022–24 · BioBrain"][i]}</span>
@@ -196,13 +237,13 @@ export default function Home() {
             </div>
           </section>
 
-          {/* TURN ZONE */}
-          <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40 text-center my-8 pl-24">
-            {phase.rot > 45 ? "— turned, riding across —" : "— the turn —"}
+          {/* TURN ZONE — the bike pauses + rotates here */}
+          <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40 text-center py-[4vh] px-24">
+            {phase.turnLabel === "down" ? "— riding down —" : phase.turnLabel === "turn1" ? "— turning —" : phase.turnLabel === "across" ? "— riding across —" : phase.turnLabel === "turn2" ? "— turning —" : phase.turnLabel === "down-right" ? "— down the right —" : "— parked —"}
           </p>
 
           {/* ACT 2 — Personal: horizontal ride */}
-          <section className="pl-24">
+          <section className="px-24 min-h-[32vh] py-[3vh]">
             <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Personal — across</p>
             <div className="grid grid-cols-2 gap-4 mt-3">
               {personal.map((p) => (
@@ -216,7 +257,7 @@ export default function Home() {
           </section>
 
           {/* FINALE — parked */}
-          <section className="mt-10 pl-24 text-center">
+          <section className="mt-10 pr-24 text-center min-h-[36vh] pb-[6vh]">
             <Link href="/playground" className="block reveal">
               <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Miscellaneous</p>
               <h3 className="font-sans-ui text-xl font-bold mt-1">Playground →</h3>
