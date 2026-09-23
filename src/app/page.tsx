@@ -6,7 +6,7 @@ import { PROJECTS } from "../data";
 function Tree() {
   return (
     <div className="relative">
-      <img src="/tree.gif" alt="Tree" className="mx-auto w-64" draggable={false} />
+      <img src="/tree.gif" alt="Tree" className="w-full max-h-64 object-contain" draggable={false} />
     </div>
   );
 }
@@ -84,7 +84,8 @@ function Visual({ slug }: { slug: string }) {
 
 export default function Home() {
   const journeyRef = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState({ y: 0, y2: 0, x: 0, rot: 90, parked: false, parkT: 0, checkpoint: 0, turnLabel: "down" });
+  const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const [phase, setPhase] = useState({ y: 0, y2: 0, x: 0, rot: 90, parked: false, parkT: 0, checkpoint: 0, turnLabel: "down", dodgePro: [0, 0], dodgePer: [0, 0] });
 
   useEffect(() => {
     const els = document.querySelectorAll(".reveal");
@@ -131,6 +132,18 @@ export default function Home() {
       if (reduced) rotDeg = 0;
       const top = yDown * Y1 + (across > 0 || yDown2 > 0 ? CROSS : across * CROSS) + yDown2 * Y2;
       const left = across * HW;
+      // Content dodge: cards yield (bike width + 20px gap) on the bike's side while
+      // the bike's nose is within [cardTop - 48px lead, cardBottom]. Horizontal-only
+      // margins never shift vertical offsets, so this is feedback-free.
+      const LEAD = 48;
+      const GIVE = 100; // ~80px bike + 20px gap
+      const dodge = (idx: number) => {
+        const el = cardRefs.current[idx];
+        if (!el || !journeyRef.current) return 0;
+        const cTop = el.offsetTop; // journeyRef is relative → direct offsetParent
+        const cBottom = cTop + el.offsetHeight;
+        return top >= cTop - LEAD && top <= cBottom ? 1 : 0;
+      };
       setPhase({
         y: top,
         y2: yDown2,
@@ -141,6 +154,8 @@ export default function Home() {
         checkpoint: p < 0.2 ? 0 : p < 0.5 ? 1 : p < 0.75 ? 2 : 3,
         turnLabel:
           p < 0.35 ? "down" : p < 0.45 ? "turn1" : p < 0.65 ? "across" : p < 0.75 ? "turn2" : p < 0.92 ? "down-right" : "parked",
+        dodgePro: [dodge(0), dodge(1)],
+        dodgePer: [dodge(2), dodge(3)],
       });
     };
     const tick = () => {
@@ -171,6 +186,7 @@ export default function Home() {
   const personal = PROJECTS.slice(2);
   const bikeTop = phase.y;
   const bikeLeft = phase.x;
+  const DODGE_EASE = "margin 0.45s cubic-bezier(0.22, 1, 0.36, 1)";
 
   return (
     <main className="bg-[#FAF9F7] min-h-screen">
@@ -197,13 +213,18 @@ export default function Home() {
             <Motorbike parked={phase.parked} />
           </div>
 
-          {/* ACT 1 — Professional projects on the RIGHT of the bike */}
-          <section className="mt-8 pl-24 pr-2">
+          {/* ACT 1 — Professional projects, full width; cards dodge the bike */}
+          <section className="mt-8 px-5">
             <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Professional Projects</p>
             <div className="mt-3 space-y-0">
               {pros.map((p, i) => (
-                <Link key={p.slug} href={`/work/${p.slug}`} className="block reveal min-h-[32vh] py-[3vh]">
-                  <div className="flex items-center gap-2">
+                <Link
+                  key={p.slug}
+                  href={`/work/${p.slug}`}
+                  ref={(el) => { cardRefs.current[i] = el; }}
+                  className="block reveal min-h-[32vh] py-[3vh]"
+                  style={{ marginLeft: phase.dodgePro[i] * 100, transition: DODGE_EASE }}
+                ><div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: phase.checkpoint >= i ? p.accent : "#ddd" }} />
                     <span className="font-sans-ui text-[10px] tracking-[0.2em] uppercase opacity-50">{["2026 · Hero MotoCorp", "2022–24 · BioBrain"][i]}</span>
                   </div>
@@ -221,13 +242,18 @@ export default function Home() {
             </div>
           </section>
 
-          {/* ACT 2 — Personal projects */}
-          <section className="px-24 min-h-[32vh] py-[3vh]">
+          {/* ACT 2 — Personal projects, full width; cards dodge from the right */}
+          <section className="px-5 min-h-[32vh] py-[3vh]">
             <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Personal Projects</p>
             <div className="flex flex-col gap-4 mt-3">
-              {personal.map((p) => (
-                <Link key={p.slug} href={`/work/${p.slug}`} className="flex items-center gap-3 reveal bg-white rounded-xl p-3 shadow-sm">
-                  <div className="w-24 shrink-0"><Visual slug={p.slug} /></div>
+              {personal.map((p, j) => (
+                <Link
+                  key={p.slug}
+                  href={`/work/${p.slug}`}
+                  ref={(el) => { cardRefs.current[2 + j] = el; }}
+                  className="flex items-center gap-3 reveal bg-white rounded-xl p-3 shadow-sm"
+                  style={{ marginRight: phase.dodgePer[j] * 100, transition: DODGE_EASE }}
+                ><div className="w-24 shrink-0"><Visual slug={p.slug} /></div>
                   <div>
                     <h3 className="font-sans-ui text-sm font-bold">{p.title}</h3>
                     <p className="font-sans-ui text-[11px] opacity-60 leading-snug">{p.tldr}</p>
@@ -238,7 +264,7 @@ export default function Home() {
           </section>
 
           {/* FINALE */}
-          <section className="mt-10 pr-24 text-center min-h-[36vh] pb-[6vh]">
+          <section className="mt-10 px-5 text-center min-h-[36vh] pb-[6vh]">
             <Link href="/playground" className="block reveal">
               <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Miscellaneous</p>
               <h3 className="font-sans-ui text-xl font-bold mt-1">Playground →</h3>
