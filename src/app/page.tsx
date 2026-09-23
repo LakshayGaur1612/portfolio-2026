@@ -176,7 +176,7 @@ export default function Home() {
     <main className="bg-[#FAF9F7] min-h-screen">
       <div className="max-w-xl mx-auto px-6 pb-32">
         <nav className="flex items-start justify-between py-6 font-sans-ui text-[10px] tracking-[0.2em] uppercase opacity-60">
-          <div className="leading-relaxed">Lakshay Gaur<br />Gurgaon, IN<br />28.6° N, 77.2° E</div>
+          <div className="leading-relaxed">Lakshay Gaur</div>
           <div className="flex gap-4">
             <Link href="/resume">Resume</Link>
             <Link href="/playground">Playground</Link>
@@ -184,7 +184,6 @@ export default function Home() {
         </nav>
 
         <header className="pt-6 text-center">
-          <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-50">Portfolio 2026</p>
           <Tree />
           <h1 className="text-sm font-bold mt-4 font-sans-ui">Product Designer & Creative Technologist</h1>
         </header>
@@ -222,14 +221,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* TURN MARKER */}
-          <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40 text-center py-[4vh] px-24">
-            — Parked —
-          </p>
-
-          {/* ACT 2 — Personal: across */}
+          {/* ACT 2 — Personal projects */}
           <section className="px-24 min-h-[32vh] py-[3vh]">
-            <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Personal — Across</p>
+            <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Personal Projects</p>
             <div className="flex flex-col gap-4 mt-3">
               {personal.map((p) => (
                 <Link key={p.slug} href={`/work/${p.slug}`} className="flex items-center gap-3 reveal bg-white rounded-xl p-3 shadow-sm">
@@ -243,17 +237,29 @@ export default function Home() {
             </div>
           </section>
 
-          {/* FINALE — parked */}
+          {/* FINALE */}
           <section className="mt-10 pr-24 text-center min-h-[36vh] pb-[6vh]">
             <Link href="/playground" className="block reveal">
               <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Miscellaneous</p>
               <h3 className="font-sans-ui text-xl font-bold mt-1">Playground →</h3>
             </Link>
-            <p className="font-sans-ui text-[11px] uppercase tracking-[0.25em] opacity-50 mt-8">
-              ● Parked · Thanks for riding
-            </p>
           </section>
         </div>
+
+        {/* Sketchbook collage — organic layout */}
+        <section className="mt-6 mb-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="overflow-hidden border-2 border-black rounded-[42%_58%_55%_45%/48%_42%_58%_52%] -rotate-1 h-64">
+              <img src="/case/sketches.png" alt="Sketchbook — top" className="w-full h-full object-cover" style={{ objectPosition: "top" }} loading="lazy" />
+            </div>
+            <div className="overflow-hidden border-2 border-black rounded-[58%_42%_45%_55%/52%_58%_42%_48%] rotate-1 h-64 mt-8">
+              <img src="/case/sketches.png" alt="Sketchbook — middle" className="w-full h-full object-cover" style={{ objectPosition: "center" }} loading="lazy" />
+            </div>
+            <div className="overflow-hidden border-2 border-black rounded-[38%_62%_50%_50%/55%_45%_60%_40%] rotate-1 h-64 col-span-2">
+              <img src="/case/sketches.png" alt="Sketchbook — bottom" className="w-full h-full object-cover" style={{ objectPosition: "bottom" }} loading="lazy" />
+            </div>
+          </div>
+        </section>
 
         <footer className="mt-10 text-center font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-60">
           Lakshaygaur1612@gmail.com · <Link href="/" className="underline">Return to gate</Link>
