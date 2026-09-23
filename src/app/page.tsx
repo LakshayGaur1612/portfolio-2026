@@ -58,6 +58,20 @@ function BikeFace({ parked }: { parked: boolean }) {
   );
 }
 
+function Motorbike({ parked }: { parked: boolean }) {
+  const [missing, setMissing] = useState(false);
+  if (missing) return <BikeFace parked={parked} />;
+  return (
+    <img
+      src="/bike.png"
+      alt="Motorbike"
+      onError={() => setMissing(true)}
+      className={`w-20 ${parked ? "" : "animate-chug"}`}
+      draggable={false}
+    />
+  );
+}
+
 function Visual({ slug }: { slug: string }) {
   const soft = "rounded-xl overflow-hidden";
   if (slug === "two-wheeler")
@@ -216,12 +230,12 @@ export default function Home() {
             className="absolute left-0 top-0 z-10 pointer-events-none"
             style={{ transform: `translate(${bikeLeft}px, ${bikeTop}px) rotate(${phase.rot}deg) ${phase.parked ? `rotate(${-8 * phase.parkT}deg)` : ""}` }}
           >
-            <BikeFace parked={phase.parked} />
+            <Motorbike parked={phase.parked} />
           </div>
 
-          {/* ACT 1 — Professional: timeline on the RIGHT of the bike */}
+          {/* ACT 1 — Professional projects on the RIGHT of the bike */}
           <section className="mt-8 pl-24 pr-2">
-            <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Professional — the ride down</p>
+            <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Professional Projects</p>
             <div className="mt-3 space-y-0">
               {pros.map((p, i) => (
                 <Link key={p.slug} href={`/work/${p.slug}`} className="block reveal min-h-[32vh] py-[3vh]">
@@ -229,7 +243,13 @@ export default function Home() {
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: phase.checkpoint >= i ? p.accent : "#ddd" }} />
                     <span className="font-sans-ui text-[10px] tracking-[0.2em] uppercase opacity-50">{["2026 · Hero MotoCorp", "2022–24 · BioBrain"][i]}</span>
                   </div>
-                  <div className="mt-2"><Visual slug={p.slug} /></div>
+                  <div className="mt-2">
+                    {p.slug === "biobrain" ? (
+                      <img src="/case/biobrain/data-visualization.jpg" alt="BioBrain story-telling dashboard" className="rounded-xl w-full" loading="lazy" />
+                    ) : (
+                      <Visual slug={p.slug} />
+                    )}
+                  </div>
                   <h3 className="font-sans-ui text-xl font-bold mt-2">{p.title}</h3>
                   <p className="font-sans-ui text-sm opacity-60">{p.tldr}</p>
                 </Link>
@@ -237,20 +257,22 @@ export default function Home() {
             </div>
           </section>
 
-          {/* TURN ZONE — the bike pauses + rotates here */}
+          {/* TURN MARKER */}
           <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40 text-center py-[4vh] px-24">
-            {phase.turnLabel === "down" ? "— riding down —" : phase.turnLabel === "turn1" ? "— turning —" : phase.turnLabel === "across" ? "— riding across —" : phase.turnLabel === "turn2" ? "— turning —" : phase.turnLabel === "down-right" ? "— down the right —" : "— parked —"}
+            — Parked —
           </p>
 
-          {/* ACT 2 — Personal: horizontal ride */}
+          {/* ACT 2 — Personal: across */}
           <section className="px-24 min-h-[32vh] py-[3vh]">
-            <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Personal — across</p>
-            <div className="grid grid-cols-2 gap-4 mt-3">
+            <p className="font-sans-ui text-[10px] tracking-[0.25em] uppercase opacity-40">Personal — Across</p>
+            <div className="flex flex-col gap-4 mt-3">
               {personal.map((p) => (
-                <Link key={p.slug} href={`/work/${p.slug}`} className="block reveal bg-white rounded-xl p-3 shadow-sm">
-                  <Visual slug={p.slug} />
-                  <h3 className="font-sans-ui text-sm font-bold mt-2">{p.title}</h3>
-                  <p className="font-sans-ui text-[11px] opacity-60 leading-snug">{p.tldr}</p>
+                <Link key={p.slug} href={`/work/${p.slug}`} className="flex items-center gap-3 reveal bg-white rounded-xl p-3 shadow-sm">
+                  <div className="w-24 shrink-0"><Visual slug={p.slug} /></div>
+                  <div>
+                    <h3 className="font-sans-ui text-sm font-bold">{p.title}</h3>
+                    <p className="font-sans-ui text-[11px] opacity-60 leading-snug">{p.tldr}</p>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -263,7 +285,7 @@ export default function Home() {
               <h3 className="font-sans-ui text-xl font-bold mt-1">Playground →</h3>
             </Link>
             <p className="font-sans-ui text-[11px] uppercase tracking-[0.25em] opacity-50 mt-8">
-              {phase.parked ? "● Parked · thanks for riding" : "○ still riding…"}
+              ● Parked · Thanks for riding
             </p>
           </section>
         </div>

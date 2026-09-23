@@ -60,6 +60,25 @@ function PhoneWire({ mode }: { mode: "flow" | "modal" | "dash" }) {
   );
 }
 
+function Shot({ src, label }: { src: string; label: string }) {
+  return (
+    <figure className="my-8">
+      <div className="rounded-xl bg-[#ECEAE6] p-3" style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+        <img src={src} alt={label} className="rounded-lg w-full" loading="lazy" />
+        <figcaption className="text-center font-sans-ui text-[11px] opacity-50 mt-3">{label}</figcaption>
+      </div>
+    </figure>
+  );
+}
+
+const BIOBRAIN_FLOW = [
+  { src: "/case/biobrain/dashboard.jpg", label: "BioBrain — global dashboard" },
+  { src: "/case/biobrain/builder-question-editor.jpg", label: "BioBrain — survey builder, question editor" },
+  { src: "/case/biobrain/sample-quota.jpg", label: "BioBrain — sample collection, quota" },
+  { src: "/case/biobrain/data-pipeline-config.jpg", label: "BioBrain — data pipeline configuration" },
+  { src: "/case/biobrain/data-visualization.jpg", label: "BioBrain — visualization & insights" },
+];
+
 function Gif({ label, mode }: { label: string; mode: "flow" | "modal" | "dash" }) {
   return (
     <figure className="my-8">
@@ -105,18 +124,34 @@ export default async function Case({ params }: { params: Promise<{ slug: string 
           <p className="mt-3">{p.problem}</p>
         </Section>
 
-        <Gif label={`${p.title} — navigating screens`} mode="flow" />
+        {slug === "biobrain" ? (
+          <>
+            <Shot src={BIOBRAIN_FLOW[0].src} label={BIOBRAIN_FLOW[0].label} />
+          </>
+        ) : (
+          <Gif label={`${p.title} — navigating screens`} mode="flow" />
+        )}
 
         {p.decisions.map((d, i) => (
           <div key={d.title}>
             <Section label={i === 0 ? "Decisions" : ""} title={d.title}>
               <p>{d.body}</p>
             </Section>
-            {i === 0 && <Gif label={`${p.title} — filter modal`} mode="modal" />}
+            {i === 0 && (
+              slug === "biobrain"
+                ? <Shot src={BIOBRAIN_FLOW[1].src} label={BIOBRAIN_FLOW[1].label} />
+                : <Gif label={`${p.title} — filter modal`} mode="modal" />
+            )}
+            {slug === "biobrain" && i === 1 && <Shot src={BIOBRAIN_FLOW[2].src} label={BIOBRAIN_FLOW[2].label} />}
+            {slug === "biobrain" && i === 2 && <Shot src={BIOBRAIN_FLOW[3].src} label={BIOBRAIN_FLOW[3].label} />}
           </div>
         ))}
 
-        <Gif label={`${p.title} — dashboard interaction`} mode="dash" />
+        {slug === "biobrain" ? (
+          <Shot src={BIOBRAIN_FLOW[4].src} label={BIOBRAIN_FLOW[4].label} />
+        ) : (
+          <Gif label={`${p.title} — dashboard interaction`} mode="dash" />
+        )}
 
         <Section label="Impact">
           <ul className="space-y-2">
