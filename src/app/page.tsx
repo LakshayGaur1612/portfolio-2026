@@ -3,45 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PROJECTS } from "../data";
 
-const LEAVES = Array.from({ length: 18 }, (_, i) => ({
-  left: 8 + ((i * 53) % 84),
-  delay: (i * 0.55) % 8,
-  dur: 7 + ((i * 37) % 40) / 10,
-  size: 4 + ((i * 29) % 5),
-  drift: 40 + ((i * 41) % 70),
-  color: ["#1F3BFF", "#0a7d2c", "#FF2B2B"][i % 3],
-}));
-
 function Tree() {
   return (
     <div className="relative">
-      <div className="animate-sway mx-auto w-56">
-        <svg viewBox="0 0 200 170" className="w-full">
-          <path d="M95 165 C95 130 88 108 68 92 M105 165 C105 125 116 102 138 86" stroke="#111" strokeWidth="7" fill="none" strokeLinecap="round" />
-          <path d="M92 130 C80 125 72 118 66 108 M108 128 C120 122 128 114 132 104" stroke="#111" strokeWidth="3" fill="none" />
-          <ellipse cx="100" cy="68" rx="72" ry="52" fill="#111" />
-          <ellipse cx="72" cy="58" rx="30" ry="22" fill="#FAF9F7" />
-          <ellipse cx="128" cy="52" rx="26" ry="20" fill="#FAF9F7" />
-          <ellipse cx="100" cy="84" rx="34" ry="17" fill="#FAF9F7" opacity="0.9" />
-          <ellipse cx="52" cy="76" rx="14" ry="12" fill="#FAF9F7" />
-          <ellipse cx="150" cy="74" rx="15" ry="12" fill="#FAF9F7" />
-        </svg>
-      </div>
-      {LEAVES.map((l, i) => (
-        <span
-          key={i}
-          className="wind-leaf absolute top-10 rounded-full"
-          style={{
-            left: `${l.left}%`,
-            width: l.size, height: l.size,
-            background: l.color, opacity: 0.55,
-            animationDuration: `${l.dur}s`,
-            animationDelay: `${l.delay}s`,
-            ["--drift" as string]: `${l.drift}px`,
-          }}
-        />
-      ))}
-      <style>{`@keyframes windblow{0%{transform:translate(0,0) rotate(0);opacity:0}12%{opacity:.7}80%{opacity:.5}100%{transform:translate(calc(var(--drift)*-1),70px) rotate(50deg);opacity:0}}.wind-leaf{animation-name:windblow;animation-iteration-count:infinite;animation-timing-function:ease-in-out}@media (prefers-reduced-motion:reduce){.wind-leaf,.animate-sway{animation:none!important}}`}</style>
+      <img src="/tree.gif" alt="Tree" className="mx-auto w-64" draggable={false} />
     </div>
   );
 }
